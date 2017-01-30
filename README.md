@@ -21,9 +21,27 @@ For usage example see the [dxTarRead.c](dxTarRead.c).
 
 
 ## Building example:
+Just define `DXTARREAD_EXAMPLE` and compile:
 ```bash
-gcc -DDXTARREAD_EXAMPLE dxTarRead.c -o dxTarReadExample.exe
+  gcc -DDXTARREAD_EXAMPLE -Wall dxTarRead.c -o dxTarReadExample
 ```
+
+## File naming and folders:
+The `fileName` string must be the same, as achieving-time arguments. Example:
+````bash
+  tar -cvf myarchive.tar file1.txt dir/subfile.txt ./file2.txt ./dir2/*
+````
+The function will find `file1.txt` correctly, but not `./file1.txt`. The `dir/subfile.txt` is correct too. To find a file inside of `dir2`: `./dir2/file`.
+
+You can get only files in directories, but not directory listing. The function will find `dir/`, but it's `fileSize` will be `0`.
+
+## Supported tar versions
+Only [GNU tar](http://www.gnu.org/software/tar/manual/html_node/Standard.html). But it's most modern format, used by default in Linux (checked in Ubuntu and Arch Linux).
+
+## Supported compilers
+The code is not compiler dependent. The `sizeof(char)` must be `1` on your compiler. Theoretically, you can use it with any compiler and operation system (OpenCL for example).
+
+Tested compilers: GCC, Clang, TCC, Visual Studio.
 
 ## Credits:
 Developed by Dmitry Hrabrov a.k.a. DeXPeriX and every direct or indirect contributor to the GitHub.
