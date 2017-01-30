@@ -1,5 +1,5 @@
 /*
- dxTarRead - 0.9 - public domain
+ dxTarRead - 0.91 - public domain
  no warrenty implied; use at your own risk.
  authored from 2017 by Dmitry Hrabrov a.k.a. DeXPeriX
  http://dexperix.net
@@ -13,24 +13,22 @@ const char* dxTarRead(const void* tarData, const long tarSize,
                       const char* fileName, long* fileSize)
 {
     const int NAME_OFFSET = 0, SIZE_OFFSET = 124, MAGIC_OFFSET = 257;
-    const int BLOCK_SIZE = 512, NAME_SIZE = 100, MAGIC_SIZE = 5;
+    const int BLOCK_SIZE = 512, NAME_SIZE = 100, SZ_SIZE = 12, MAGIC_SIZE = 5;
     const char MAGIC[] = "ustar"; /* Modern GNU tar's magic const */
-    const char* tar = tarData; /* Convert from "void*" to "char*" */
-    const char* sz; /* file size string, octal */
-    const char* name; /* file name */
+    const char* tar = (const char*) tarData; /* From "void*" to "char*" */
     long size, mul, i, p = 0, found = 0, newOffset = 0;
     
     *fileSize = 0; /* will be zero if TAR wrong or there is no such file */
-    do {
+    do { /* "Load" data from tar - just point to passed memory*/
+        const char* name = tar + NAME_OFFSET + p + newOffset;
+        const char* sz = tar + SIZE_OFFSET + p + newOffset; /* size string */
         p += newOffset; /* pointer to current file's data in TAR */
+
         for(i=0; i<MAGIC_SIZE; i++) /* Check for supported TAR version */
             if( tar[i + MAGIC_OFFSET + p] != MAGIC[i] ) return 0; /* = NULL */
 
-        name = tar + NAME_OFFSET + p; /* "Load" data from memory... */
-        sz = tar + SIZE_OFFSET + p; /* ... just point to passed memory */ 
-
         size = 0; /* Convert file size from string into integer */
-        for(i=10, mul=1; i>=0; mul*=8, i--) /* Octal str to int */
+        for(i=SZ_SIZE-2, mul=1; i>=0; mul*=8, i--) /* Octal str to int */
             if( (sz[i]>='0') && (sz[i] <= '9') ) size += (sz[i] - '0') * mul;
 
         /* Offset size in bytes. Depends on file size and TAR's block size */
@@ -39,7 +37,7 @@ const char* dxTarRead(const void* tarData, const long tarSize,
 
         i = 0; /* strncmp - compare file's name with that a user wants */
         while((i<NAME_SIZE) && (fileName[i]!=0) && (name[i]==fileName[i])) i++;
-        if( (i > 0) && (name[i] == 0) ) found = 1;
+        if( (i > 0) && (name[i] == 0) && (fileName[i] == 0) ) found = 1;
     } while( !found && (p + newOffset + BLOCK_SIZE <= tarSize) );
     if( found ){
         *fileSize = size;
@@ -71,11 +69,12 @@ int main(int argc, char **argv){
     fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    data = malloc(fsize + 1);
+    data = (char*) malloc(fsize + 1);
     readed = fread(data, 1, fsize, f);
     fclose(f);
     if( readed != fsize ){
         puts("File not readed correctly!");
+        free(data);
         return -1;
     }
     data[fsize] = 0;
@@ -86,6 +85,7 @@ int main(int argc, char **argv){
         fwrite(myfile, 1, mysize, stdout);
         printf("\nFile size: %ld\n", mysize);
     }else printf("No file '%s' in TAR archive or archive incorrect\n",argv[2]);
+    free(data); /* free data after you finished using tar reader */
     return 0;
 }
 #endif /* DXTARREAD_EXAMPLE */
