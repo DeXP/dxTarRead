@@ -51,7 +51,7 @@ const char* dxTarRead(const void* tarData, const long tarSize,
 #include <stdlib.h>
 
 int main(int argc, char **argv){
-    long fsize, mysize, readed;
+    long fsize, mysize, bytes_read;
     FILE* f;
     char* data;
     const char* myfile;
@@ -70,10 +70,10 @@ int main(int argc, char **argv){
     fseek(f, 0, SEEK_SET);
 
     data = (char*) malloc(fsize + 1);
-    readed = fread(data, 1, fsize, f);
+    bytes_read = fread(data, 1, fsize, f);
     fclose(f);
-    if( readed != fsize ){
-        puts("File not readed correctly!");
+    if( bytes_read != fsize ){
+        puts("File was not read correctly!");
         free(data);
         return -1;
     }
