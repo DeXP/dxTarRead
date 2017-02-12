@@ -19,22 +19,22 @@ const char* dxArRead(const void* arData, const long arSize,
     long fsize, mul, i, p = 0, found = 0, newOffset = 0, sizeEnd;
     
     *fileSize = 0; /* will be zero if AR wrong or there is no such file */
-	for(p=0; p<MAGIC_SIZE; p++) 
-		if( ar[p] != MAGIC[p] ) return 0;
+    for(p=0; p<MAGIC_SIZE; p++) 
+        if( ar[p] != MAGIC[p] ) return 0;
 
     do { /* "Load" data from ar - just point to passed memory*/
         const char* name = ar + NAME_OFFSET + p + newOffset;
         const char* sz = ar + SIZE_OFFSET + p + newOffset; /* size string */
         p += newOffset; /* pointer to current file's data in AR */
-		if( ar[p + NL_OFFSET] != '\n' ) return 0; /* incorrect archive */
-		
+        if( ar[p + NL_OFFSET] != '\n' ) return 0; /* incorrect archive */
+
         fsize = 0; sizeEnd = SZ_SIZE-1; /* Convert file size from string */
-		while( sz[sizeEnd] == ' ' ) sizeEnd--; /* find where size really end */
+        while( sz[sizeEnd] == ' ' ) sizeEnd--; /* find where size really end */
         for(i=sizeEnd, mul=1; i>=0; mul*=10, i--)
             if( (sz[i]>='1') && (sz[i] <= '9') ) fsize += (sz[i] - '0') * mul;
 
         /* Offset size in bytes. Depends on file size and AR's block size */
-		newOffset = (fsize % 2)? (fsize + BLOCK_SIZE +1): (fsize + BLOCK_SIZE);
+        newOffset = (fsize % 2)? (fsize + BLOCK_SIZE +1): (fsize + BLOCK_SIZE);
 
         i = 0; /* strncmp - compare file's name with that a user wants */
         while((i<NAME_SIZE) && (fileName[i]!=0) && (name[i]==fileName[i])) i++;
