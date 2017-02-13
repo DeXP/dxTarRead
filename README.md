@@ -1,9 +1,8 @@
-# dxTarRead and dxArRead
-A minimalistic [GNU tar](http://www.gnu.org/software/tar/manual/html_node/Standard.html) (tape archive) and [GNU ar](https://en.wikipedia.org/wiki/Ar_(Unix)) file reader written in ANSI C.
+# dxTarRead, dxArRead and dxCpioRead
+A minimalistic archive file readers written in ANSI C. Supported formats: [GNU tar](http://www.gnu.org/software/tar/manual/html_node/Standard.html) (tape archive), [GNU ar](https://en.wikipedia.org/wiki/Ar_(Unix)), [Cpio](https://en.wikipedia.org/wiki/Cpio).
 
 * public domain
-* single [dxTarRead.c](dxTarRead.c) file with one function for TAR
-* single [dxArRead.c](dxArRead.c) file with one function for AR
+* single file with one function for each format ([tar](dxTarRead.c), [ar](dxArRead.c), [cpio](dxCpioRead.c) )
 * less than 50 lines of code, including comments and blanks
 * easy to use, just returns a pointer to your file inside archive
 * no dependencies (even stdlibc not used), embedded friendly
@@ -25,11 +24,16 @@ For usage example see the [dxTarRead.c](dxTarRead.c).
 const char* dxArRead(const void* arData, const long arSize, 
                       const char* fileName, long* fileSize)
 ````
-
 The same. Data will *never* be NULL-terminated.
 
+````c
+const char* dxCpioRead(const void* cpioData, const long cpioSize,
+                      const char* fileName, long* fileSize)
+````
+The same. Data will be NULL terminated only if `fileSize` is odd.
+
 ## Building example:
-Just define `DXTARREAD_EXAMPLE` or `DXARREAD_EXAMPLE` and compile:
+Just define `DXTARREAD_EXAMPLE` or `DXARREAD_EXAMPLE` or `DXCPIOREAD_EXAMPLE` and compile:
 ```bash
   gcc -DDXTARREAD_EXAMPLE -Wall dxTarRead.c -o dxTarReadExample
 ```
@@ -39,17 +43,18 @@ The `fileName` string must be the same, as TAR archieving-time arguments. Exampl
 ````bash
   tar -cvf myarchive.tar file1.txt dir/subfile.txt ./file2.txt ./dir2/*
   ar -cq myarchive.ar file1.txt dir/subfile.txt ./file2.txt ./dir2/file9.txt
+  find . -depth -print | cpio -o > /path/myarchive.cpio
 ````
 The `dxTarRead` will find `file1.txt` correctly, but not `./file1.txt`. The `dir/subfile.txt` is correct too. To find a file inside of `dir2`: `./dir2/file`.
 
-You can get only files in directories, but not directory listing in TAR. The function will find `dir/`, but it's `fileSize` will be `0`.
+You can get only files in directories, but not directory listing in TAR. The function will find `dir/`, but it's `fileSize` will be `0`. CPIO works the same.
 
 The `dxArRead` will find `file1.txt`, `file2.txt` and `file9.txt` correctly. But *not* `./file2.txt`, `dir2/.file9.txt` or `./dir2/file9.txt`.
 
  There is no directories in AR.
 
-## Supported tar versions
-Only [GNU tar](http://www.gnu.org/software/tar/manual/html_node/Standard.html) and GNU/System5 ar. It's most modern formats, used by default in Linux (checked in Ubuntu and Arch Linux).
+## Supported versions
+Only [GNU tar](http://www.gnu.org/software/tar/manual/html_node/Standard.html), GNU/System5 ar and GNU Cpio binary. It's most modern formats, used by default in Linux (checked in Ubuntu and Arch Linux). Ar and Cpio may work on other format specifications, but not tested. 
 
 ## Supported compilers
 The code is not compiler dependent. The `sizeof(char)` must be `1` on your compiler. Theoretically, you can use it with any compiler and operation system (OpenCL for example).
